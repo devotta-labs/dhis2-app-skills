@@ -14,28 +14,20 @@ management platform with its own app framework, component library, and Web API. 
 frequently get DHIS2 wrong — using deprecated API endpoints, incorrect patterns, or generic
 libraries instead of the DHIS2-specific tooling. This skill exists to prevent that.
 
-## Scaffolding a New App
+## First: determine where you are
 
-Always scaffold with the official CLI — never create the project structure manually:
+Before doing anything, figure out whether you're in an existing DHIS2 project or starting fresh.
 
-```bash
-pnpm create @dhis2/app@latest <app-name> --yes
-```
+| Check | How | Result |
+|-------|-----|--------|
+| `d2.config.js` exists in project root | Glob for `d2.config.js` | **Existing project** — skip scaffolding |
+| `@dhis2/app-runtime` in package.json | Read `package.json` | **Existing project** — skip scaffolding |
+| Neither found | — | **New project** — follow `references/bootstrapping.md` |
 
-The `--yes` flag uses sensible defaults (pnpm, JavaScript, basic template). This generates a
-working app with `@dhis2/app-runtime` and the DHIS2 build tooling already configured.
+If it's an existing project, read `d2.config.js` and `package.json` to understand what's
+already configured before making changes. Then jump to the relevant section below for whatever
+the user needs.
 
-After scaffolding:
-
-```bash
-cd <app-name>
-pnpm install
-pnpm start --proxy <dhis2-instance-url>
-```
-
-The `--proxy` flag routes API requests through a local proxy to avoid CORS issues when developing
-against a remote DHIS2 instance. At the login screen, enter `http://localhost:8080` as the
-server URL.
-
-For project structure details, d2.config.js options, template choices, and the full development
-workflow, read `references/bootstrapping.md`.
+If it's a new project, follow the full bootstrapping workflow in `references/bootstrapping.md`.
+That guide walks through scaffolding, installing the tech stack, and configuring everything
+step by step.

@@ -1,0 +1,5 @@
+# Eval workspace (test run outputs, grading, benchmarks, timing data)
+*-workspace/
+
+# Viewer artifacts
+feedback.json

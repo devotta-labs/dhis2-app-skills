@@ -1,38 +1,57 @@
 # Bootstrapping a DHIS2 App
 
-## Scaffolding
+This is the step-by-step recipe for setting up a new DHIS2 app with the opinionated
+tech stack. Follow every step in order — don't skip or substitute.
 
-Create a new DHIS2 app with the official CLI:
+**Tech stack:** TypeScript, pnpm, React Router DOM, TanStack Query v4, TanStack Table,
+`@` path alias, Vite.
+
+---
+
+## Step 1: Check for a local DHIS2 instance
+
+Before scaffolding, check whether the user has DHIS2 running locally on the default port:
 
 ```bash
-pnpm create @dhis2/app@latest <app-name> --yes
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/system/info
 ```
 
-The `--yes` flag accepts defaults: pnpm as package manager, JavaScript, and the basic template.
+- **200** — local instance is running. Use `http://localhost:8080` as the server URL during development.
+- **Any other response or connection error** — no instance detected on port 8080. This doesn't
+  mean the user has no local instance — it may be on a different port, or they may use a remote
+  instance. Ask the user which DHIS2 instance they want to develop against.
 
-Other useful flags:
-- `--typescript` / `--ts` — scaffold with TypeScript
+## Step 2: Scaffold
 
-Alternative package managers are supported but pnpm is recommended:
 ```bash
-npm create @dhis2/app@latest <app-name> -- --yes
-yarn create @dhis2/app <app-name> --yes
+pnpm create @dhis2/app@latest <app-name> --typescript --yes
 ```
 
-Note the extra `--` with npm — it's needed to pass flags through to the create script.
+Always use `--typescript`. The `--yes` flag accepts defaults (pnpm, basic template).
 
-## d2.config.js
+```bash
+cd <app-name>
+```
 
-This file configures how the app integrates with DHIS2. Import the `D2Config` type from
-`@dhis2/cli-app-scripts` for intellisense:
+## Step 3: Install the stack
+
+```bash
+pnpm add @tanstack/react-query@4 @tanstack/react-table react-router-dom
+```
+
+TanStack Query must be version 4 — do not install v5.
+
+## Step 4: Configure `d2.config.js`
+
+Replace the scaffolded config with:
 
 ```javascript
 /** @type {import('@dhis2/cli-app-scripts').D2Config} */
 const config = {
     type: 'app',
-    name: 'my-app',
-    title: 'My Application',
-    description: 'A DHIS2 application',
+    name: '<app-name>',
+    title: '<App Title>',
+    description: '<short description>',
     minDHIS2Version: '2.40',
 
     entryPoints: {
@@ -45,13 +64,11 @@ const config = {
 module.exports = config
 ```
 
-Set `minDHIS2Version` to the oldest DHIS2 version you intend to support. This is required
-for publishing to the App Hub.
+Set `minDHIS2Version` to the oldest DHIS2 version the app needs to support.
 
-## Vite Config Extensions
+## Step 5: Create `vite.config.mts`
 
-After scaffolding, create a `vite.config.mts` file in the project root. This is
-merged into the App Platform's base Vite config automatically.
+Create this file in the project root:
 
 ```typescript
 import path from 'path'
@@ -66,44 +83,221 @@ export default defineConfig({
 })
 ```
 
-This lets you import from `@/components/Foo` instead of `../../components/Foo`.
+This enables `@/components/Foo` imports instead of relative paths.
 
-## Development Workflow
+## Step 6: Add the path alias to `tsconfig.json`
 
-### Start the dev server
+Add the `paths` mapping so TypeScript resolves the `@` alias:
+
+```json
+{
+    "compilerOptions": {
+        "paths": {
+            "@/*": ["./src/*"]
+        }
+    }
+}
+```
+
+Merge this into the existing `tsconfig.json` — don't overwrite the other compiler options
+that the scaffolder set up.
+
+## Step 7: Create `src/utils/SyncUrlWithGlobalShell.tsx`
+
+```tsx
+import { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
+
+/*
+ * When the app runs in the DHIS2 Global Shell, react-router@6+ no longer
+ * fires "popstate" events on pushState/replaceState. The Global Shell
+ * listens for "popstate" to keep the browser URL in sync, so we dispatch
+ * it manually on every route change.
+ *
+ * Background on the react-router change:
+ * https://github.com/remix-run/react-router/blob/44472360ec9ea045008f453280bb749cb58e90ea/decisions/0005-remixing-react-router.md#inline-the-history-library-into-the-router
+ */
+
+export const SyncUrlWithGlobalShell = () => {
+    const location = useLocation()
+
+    useEffect(() => {
+        dispatchEvent(new PopStateEvent('popstate'))
+    }, [location.key])
+
+    return <Outlet />
+}
+```
+
+This is a layout route component — it wraps all routes so the Global Shell URL stays
+in sync. Without it, the browser URL won't update when navigating. Every route should
+be a child of this layout.
+
+## Step 8: Set up `src/App.tsx`
+
+Replace the contents of `src/App.tsx` with:
+
+```tsx
+import React from 'react'
+import { createHashRouter, RouterProvider } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { CssReset, CssVariables } from '@dhis2/ui'
+import { SyncUrlWithGlobalShell } from '@/utils/SyncUrlWithGlobalShell'
+
+const queryClient = new QueryClient()
+
+const router = createHashRouter([
+    {
+        element: <SyncUrlWithGlobalShell />,
+        children: [
+            {
+                path: '/',
+                element: <div>Home</div>,
+            },
+        ],
+    },
+])
+
+const App = () => (
+    <QueryClientProvider client={queryClient}>
+        <CssReset />
+        <CssVariables theme spacers colors elevations />
+        <RouterProvider router={router} />
+    </QueryClientProvider>
+)
+
+export default App
+```
+
+DHIS2 apps run inside an iframe in the DHIS2 shell, so use `createHashRouter` — not
+`BrowserRouter` or `createBrowserRouter`. Hash routing avoids conflicts with the
+platform's own routing.
+
+`CssReset` normalizes browser styles. `CssVariables` injects the DHIS2 design tokens
+(theme colors, spacers, elevations) as CSS custom properties so `@dhis2/ui` components
+render correctly.
+
+All routes are nested under the `SyncUrlWithGlobalShell` layout route, so every
+page automatically keeps the Global Shell URL in sync. Add new routes as children
+of that layout.
+
+## Step 9: Create `src/interfaces/apiQueryTypes.ts`
+
+```typescript
+export type PossiblyDynamic<Type, InputType> = Type | ((input: InputType) => Type)
+export type QueryVariables = Record<string, any>
+
+type QueryParameterSingularValue = string | number | boolean
+interface QueryParameterAliasedValue {
+    [name: string]: QueryParameterSingularValue
+}
+type QueryParameterSingularOrAliasedValue = QueryParameterSingularValue | QueryParameterAliasedValue
+type QueryParameterMultipleValue = QueryParameterSingularOrAliasedValue[]
+export type QueryParameterValue =
+    | QueryParameterSingularValue
+    | QueryParameterAliasedValue
+    | QueryParameterMultipleValue
+    | undefined
+
+export interface QueryParameters {
+    pageSize?: number
+    [key: string]: QueryParameterValue
+}
+
+export interface ResourceQuery {
+    resource: string
+    id?: PossiblyDynamic<string, QueryVariables>
+    data?: PossiblyDynamic<any, QueryVariables>
+    params?: PossiblyDynamic<QueryParameters, QueryVariables>
+}
+```
+
+These types describe the shape of a DHIS2 API query passed to the data engine.
+`ResourceQuery` is the main one — it maps to a DHIS2 API resource with optional
+id, request body, and query parameters.
+
+## Step 10: Create `src/utils/useApiDataQuery.ts`
+
+```typescript
+import { useDataEngine } from '@dhis2/app-runtime'
+import {
+    useQuery,
+    QueryFunction,
+    UseQueryOptions,
+    QueryKey,
+} from '@tanstack/react-query'
+import { ResourceQuery } from '../interfaces/apiQueryTypes'
+
+type UseApiDataQueryProps<
+    TResultData,
+    TError = Error,
+    TData = TResultData,
+    TQueryKey extends QueryKey = QueryKey,
+> = Omit<UseQueryOptions<TResultData, TError, TData, TQueryKey>, 'queryFn'> & {
+    query: ResourceQuery
+}
+
+export const useApiDataQuery = <
+    TResultData,
+    TError = Error,
+    TData = TResultData,
+    TQueryKey extends QueryKey = QueryKey,
+>({
+    query,
+    queryKey,
+    ...options
+}: UseApiDataQueryProps<TResultData, TError, TData, TQueryKey>) => {
+    const dataEngine = useDataEngine()
+
+    const queryFn: QueryFunction<TResultData, TQueryKey> = async () => {
+        const response = await dataEngine.query({ apiDataQuery: query })
+        return response.apiDataQuery as TResultData
+    }
+
+    return useQuery<TResultData, TError, TData, TQueryKey>({
+        queryKey,
+        queryFn,
+        ...options,
+    })
+}
+```
+
+Always use `useApiDataQuery` for data fetching — never use `useDataQuery` from
+`@dhis2/app-runtime` directly.
+
+## Step 11: Verify it runs
 
 ```bash
 pnpm start
 ```
 
-The app runs at `http://localhost:3000`. You'll see a login screen where you enter
-the DHIS2 server URL and credentials.
+The app runs at `http://localhost:3000`. The login screen appears — enter the DHIS2
+server URL (either `http://localhost:8080` if a local instance was detected in step 1,
+or the remote URL the user provided) and credentials.
 
-### Connect to a remote instance
+If developing against a remote instance, use the proxy:
 
 ```bash
-pnpm start --proxy https://play.im.dhis2.org/dev
+pnpm start --proxy <remote-dhis2-url>
 ```
 
-The proxy runs on port 8080 and handles CORS automatically. At the login screen,
-enter `http://localhost:8080` as the server URL with the credentials for that instance.
+The proxy runs on port 8080 and handles CORS. At the login screen, enter
+`http://localhost:8080` as the server URL.
 
-### Build for production
+---
+
+## Platform notes (App Platform v12)
+
+- **File extensions** — Vite requires `.tsx` for JSX files. Plain `.ts` cannot contain JSX.
+- **Environment variables** — use the `DHIS2_` prefix (not `REACT_APP_`).
+- **Node version** — 18 or 20+ required.
+- **Globals** — use `window.variableName`, not `global.variableName`.
+
+## Building for production
 
 ```bash
 pnpm build
 ```
 
-Output goes to `build/`. Upload the resulting zip to the DHIS2 App Hub or install
-directly via the App Management app.
-
-## App Platform v12 (Current)
-
-The current App Platform uses Vite and React 18. Key things to know:
-
-- **JSX files need `.jsx`/`.tsx` extensions** — Vite requires this. Plain `.js` files cannot
-  contain JSX syntax.
-- **Environment variables** use the `DHIS2_` prefix (not `REACT_APP_`). The old prefix still
-  works but is deprecated.
-- **Node 18 or 20+** is required.
-- Use `window.variableName` instead of `global.variableName`.
+Output goes to `build/`. Upload the zip to the DHIS2 App Hub or install via the
+App Management app.
