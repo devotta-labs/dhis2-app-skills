@@ -41,13 +41,25 @@ step by step.
 When the user needs to read or write data — fetching metadata, querying tracked entities, creating
 or deleting resources — follow `references/data-fetching.md`. It covers:
 
-- How to clone the DHIS2 source code to get authoritative API contracts (endpoint paths,
-  request/response shapes, query parameters) instead of guessing
+- How to clone the DHIS2 source code with `opensrc` to get authoritative API contracts
+  (endpoint paths, request/response shapes, query parameters) instead of guessing
 - Building custom hooks with `useApiDataQuery` and the correct caching strategy
 - Query parameters: filtering, ordering, and pagination
 - Mutations with cache invalidation and user feedback via alerts
 - Version-aware feature flags for handling API differences across DHIS2 versions
 - Loading and error state handling
 
-DHIS2's API changes between major versions. The reference teaches you how to derive the correct
-contracts from source rather than relying on memorized (and likely outdated) API structures.
+## Building UI
+
+When building user interfaces, use `@dhis2/ui` components — not generic libraries like MUI
+or Chakra, and not custom-built primitives. DHIS2 has its own design system and `@dhis2/ui`
+implements it. See `references/ui-patterns.md` for guidance on component usage, styling with
+CSS Modules, and design tokens.
+
+When the app needs sidebar navigation, follow `references/sidebar-navigation.md`. It provides
+a dark-themed, collapsible sidebar built from composable primitives that integrate with
+React Router and the DHIS2 layout pattern.
+
+## Rules
+
+- **React 18 only.** No Suspense for data fetching, no React 19 APIs (`use()`, `useFormStatus`, etc.). Handle loading states explicitly with `isLoading` and `CircularLoader`.
