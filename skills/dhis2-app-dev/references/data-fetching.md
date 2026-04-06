@@ -11,93 +11,62 @@ versions. Clone first, then write code.
 
 ---
 
-## Step 1: Clone all supported DHIS2 versions
+## Step 1: Clone the DHIS2 source
 
 This is the first thing you do for any data-fetching work — before writing a single line of
-hook or component code. DHIS2 apps must support the three latest stable releases. At the time
-of writing these are **2.41, 2.42, and 2.43**. Clone all three with `opensrc`.
-
-`opensrc` stores only one version at a time in its default directory, so use the `--cwd` flag
-to put each version in a separate folder:
+hook or component code. Clone the DHIS2 backend so you can read the actual API contracts —
+controller definitions, request/response DTOs, query parameter handling, and validation rules.
+Your training data is not reliable for DHIS2 APIs because they change between versions. The
+source is the only trustworthy contract.
 
 ```bash
-npx opensrc dhis2/dhis2-core@2.41 --modify --cwd ./opensrc-2.41
-npx opensrc dhis2/dhis2-core@2.42 --modify --cwd ./opensrc-2.42
-npx opensrc dhis2/dhis2-core@2.43 --modify --cwd ./opensrc-2.43
+npx opensrc dhis2/dhis2-core --modify
 ```
 
-Run all three commands. The `--modify` flag is required — it lets opensrc update `.gitignore`
-and other project files. After this you will have three directories, each containing the
-full source for that version:
-- `./opensrc-2.41/opensrc/repos/github.com/dhis2/dhis2-core/`
-- `./opensrc-2.42/opensrc/repos/github.com/dhis2/dhis2-core/`
-- `./opensrc-2.43/opensrc/repos/github.com/dhis2/dhis2-core/`
+If the user specifies a DHIS2 version (e.g. 2.41), target that version's branch:
 
-The source gives you the authoritative API contracts — controller definitions, request/response
-DTOs, query parameter handling, and validation rules. Your training data is not reliable for
-DHIS2 APIs because they change between versions. The source is the only trustworthy contract.
+```bash
+npx opensrc dhis2/dhis2-core#2.41 --modify
+```
 
-You need all three versions because the whole point is to compare them and find differences
-that require feature flags (see Step 5). Even if the user only mentions one version, clone
-all three — you cannot know whether there are breaking changes without comparing.
+The `--modify` flag is required — it lets opensrc update `.gitignore` and other project files.
+The source is cloned into `./opensrc/repos/github.com/dhis2/dhis2-core/`.
 
 ## Step 2: Read the API contracts from the cloned source
 
-Once the source is cloned, you need to read the relevant controller and DTOs for the endpoint
-you're building. For each version, you need to extract:
+Once the source is cloned, read the relevant controller and DTOs for the endpoint you're
+building. You need to extract:
 1. The endpoint path and HTTP methods
 2. Supported query parameters (filtering, paging, ordering, field selection)
 3. The request body shape (for create/update/delete)
 4. The response envelope structure
-5. Any version-specific behavior or annotations
 
 Controllers are typically in `dhis-2/dhis-web-api/`, DTOs and models in `dhis-2/dhis-api/`.
 Search for the controller class name (e.g. `OrganisationUnitController`,
 `ProgramIndicatorController`).
 
-### Preferred: use Explore subagents (if the Agent tool is available)
+### Preferred: use an Explore subagent (if the Agent tool is available)
 
 If you have access to the **Agent tool**, this is the best approach. The DHIS2 codebase is
 large and reading Java source inline floods your context with code you only need a summary of.
-Instead, launch one **Explore subagent per version** — all in the same message so they run in
-parallel. Each subagent searches its version's source, extracts the API contract, and returns
+Launch an **Explore subagent** that searches the source, extracts the API contract, and returns
 a compact summary, keeping your main context clean.
 
 Use `subagent_type: "Explore"` and a prompt like:
 
 ```
-In the cloned DHIS2 source at `./opensrc-2.{VERSION}/opensrc/repos/github.com/dhis2/dhis2-core/`,
+In the cloned DHIS2 source at `./opensrc/repos/github.com/dhis2/dhis2-core/`,
 find the controller and request/response DTOs for the `{resource}` endpoint (e.g.
 `trackedEntities`, `organisationUnits`, `programIndicators`). Return:
 1. The endpoint path and HTTP methods
 2. Supported query parameters (filtering, paging, ordering, field selection)
 3. The request body shape (for create/update/delete)
 4. The response envelope structure
-5. Any version-specific behavior or annotations
 
 Look in the Java backend — controllers are typically in dhis-2/dhis-web-api/,
 DTOs and models in dhis-2/dhis-api/. Search for the controller class name
 (e.g. OrganisationUnitController, ProgramIndicatorController).
 ```
-
-### Fallback: read the source inline
-
-If the Agent tool is not available, read the source directly using Grep and Read. Search for
-the controller class, then read the relevant methods and DTO classes. Focus on extracting the
-same five pieces of information listed above — don't read more than you need.
-
-### Compare across versions
-
-Whether you used subagents or read inline, compare the results across all three versions.
-Look for:
-- Endpoints that exist in one version but not another
-- Query parameters added or removed between versions
-- Changes to request/response shapes or field names
-- New validation rules or constraints
-
-Any difference you find should become a feature flag (see Step 5). If all three versions
-have identical contracts for this endpoint, you can write a single code path with no
-version branching.
 
 ## Step 3: Create a custom hook for the resource
 
@@ -387,12 +356,11 @@ or a meaningful error message.
 
 ## Best practices
 
-1. **Always clone all three supported versions and read the source.** Before writing any hook
-   or mutation, run `npx opensrc dhis2/dhis2-core@2.{41,42,43} --modify --cwd ./opensrc-2.{41,42,43}`
-   for each version (three separate commands), then read the API contracts from the source.
-   If the Agent tool is available, launch Explore subagents (one per version, in parallel) to
-   keep your context clean. Otherwise, read the source inline with Grep and Read. Compare the
-   results across versions and add feature flags for any differences. This applies to every
+1. **Always clone the source and read it before writing code.** Before writing any hook
+   or mutation, run `npx opensrc dhis2/dhis2-core --modify` (or with a version branch like
+   `dhis2/dhis2-core#2.41` if the user specified one), then read the API contracts from the
+   source. If the Agent tool is available, launch an Explore subagent to keep your context
+   clean. Otherwise, read the source inline with Grep and Read. This applies to every
    endpoint, no matter how common.
 
 2. **Only fetch the fields you need.** Always use the `fields` parameter to request exactly

@@ -1,8 +1,12 @@
-# Sidebar Navigation
+# Sidebar Navigation and Page Layout
 
-A dark-themed, collapsible sidebar for DHIS2 apps. Built from small composable
-primitives (`Sidenav`, `SidenavItems`, `SidenavLink`, `SidenavParent`, `SidenavFooter`)
-that integrate with React Router's `NavLink` for active-route highlighting.
+This reference contains everything needed to set up navigation in a DHIS2 app:
+the sidebar components, the page layout grid, the content width wrapper, and
+the router wiring that ties them together.
+
+The sidebar is dark-themed and collapsible, built from small composable primitives
+(`Sidenav`, `SidenavItems`, `SidenavLink`, `SidenavParent`, `SidenavFooter`) that
+integrate with React Router's `NavLink` for active-route highlighting.
 
 ## Sidenav primitives
 
@@ -356,10 +360,10 @@ Create `src/components/sidebar/Sidebar.module.css`:
 }
 ```
 
-## Layout integration
+## Layout
 
-The layout puts the sidebar and main content in a CSS grid. Routes can opt into
-collapsing the sidebar via a route handle.
+The layout puts the sidebar and main content in a CSS grid. It reads route handles
+to decide whether to collapse the sidebar.
 
 Create `src/components/layout/Layout.tsx`:
 
@@ -369,6 +373,8 @@ import { Sidebar } from '../sidebar/Sidebar';
 import styles from './Layout.module.css';
 
 export type RouteHandle = {
+    fullWidth?: boolean;
+    /* whether to automatically collapse the sidebar when route is active */
     collapseSidebar?: boolean;
 };
 
@@ -432,12 +438,71 @@ Create `src/components/layout/Layout.module.css`:
 }
 ```
 
-## Wiring it into the router
+## Page wrapper
 
-Use `Layout` as a route element wrapping all pages. Set `collapseSidebar` on
-route handles where the sidebar should be hidden (e.g. detail/edit pages):
+Content on wide screens needs a max-width constraint — without it, text and forms
+stretch uncomfortably across the full viewport. `PageWrapper` centers content with a
+default cap of `1400px`, but routes can opt out via the `fullWidth` route handle
+(useful for comparison views, dashboards, or wide tables).
+
+Create `src/components/layout/PageWrapper.tsx`:
 
 ```tsx
+import { useMatches } from 'react-router-dom';
+import { RouteHandle } from './Layout';
+
+interface PageWrapperProps {
+    children: React.ReactNode;
+    maxWidth?: string;
+}
+
+export const defaultMaxWidth: string = '1400px';
+
+const style: React.CSSProperties = {
+    maxInlineSize: defaultMaxWidth,
+    marginInlineStart: 'auto',
+    marginInlineEnd: 'auto',
+    padding: '20px 16px',
+    inlineSize: '100%',
+};
+
+export const PageWrapper = ({ children, maxWidth }: PageWrapperProps) => {
+    const fullWidthRoute = useMatches().some(
+        (match) => !!(match.handle as RouteHandle)?.fullWidth,
+    );
+
+    return (
+        <div
+            style={{
+                ...style,
+                maxInlineSize: fullWidthRoute ? 'none' : maxWidth || defaultMaxWidth,
+                inlineSize: '100%',
+            }}
+        >
+            {children}
+        </div>
+    );
+};
+```
+
+`PageWrapper` is used as a layout route element wrapping `<Outlet />` — not inside
+the `Layout` component. This way routes can exist as direct children of `Layout`
+without the wrapper if they need a fully custom layout.
+
+## Wiring it into the router
+
+The full route tree follows this nesting:
+`SyncUrlWithGlobalShell` → `Layout` → `PageWrapper` wrapping `<Outlet />` → page routes.
+
+Set `collapseSidebar` on routes where the sidebar should be hidden (detail/edit pages).
+Set `fullWidth` on routes that need the full viewport width (dashboards, comparison views).
+
+```tsx
+import { createHashRouter, Outlet } from 'react-router-dom';
+import { SyncUrlWithGlobalShell } from '@/utils/SyncUrlWithGlobalShell';
+import { Layout, RouteHandle } from '@/components/layout/Layout';
+import { PageWrapper } from '@/components/layout/PageWrapper';
+
 const router = createHashRouter([
     {
         element: <SyncUrlWithGlobalShell />,
@@ -445,12 +510,26 @@ const router = createHashRouter([
             {
                 element: <Layout />,
                 children: [
-                    { path: '/', element: <HomePage /> },
-                    { path: '/settings', element: <SettingsPage /> },
                     {
-                        path: '/items/:id',
-                        element: <ItemDetailPage />,
-                        handle: { collapseSidebar: true } satisfies RouteHandle,
+                        element: (
+                            <PageWrapper>
+                                <Outlet />
+                            </PageWrapper>
+                        ),
+                        children: [
+                            { path: '/', element: <HomePage /> },
+                            { path: '/settings', element: <SettingsPage /> },
+                            {
+                                path: '/items/:id',
+                                element: <ItemDetailPage />,
+                                handle: { collapseSidebar: true } satisfies RouteHandle,
+                            },
+                            {
+                                path: '/dashboard',
+                                element: <DashboardPage />,
+                                handle: { fullWidth: true } satisfies RouteHandle,
+                            },
+                        ],
                     },
                 ],
             },

@@ -1,10 +1,10 @@
 # UI Patterns for DHIS2 Apps
 
-Always use `@dhis2/ui` for UI components, or build custom components using the primitives provided by the library. Don't use generic libraries (MUI, Chakra, Ant Design) unless the user specifically requests it. DHIS2 apps run inside the platform shell alongside other
+Always use `@dhis2/ui` for UI components — not generic libraries (MUI, Chakra, Ant Design). Only build custom components if the library doesn't provide the component you need. DHIS2 apps run inside the platform shell alongside other
 apps, and `@dhis2/ui` implements the DHIS2 design system so everything looks consistent.
 The library is included automatically when you scaffold a DHIS2 app.
 
-Import components directly:
+Import components directly from `@dhis2/ui`:
 
 ```tsx
 import {
@@ -32,7 +32,23 @@ The library has more components than you'd expect — `Transfer`, `SelectorBar`,
 `Tab`, `SplitButton`, `DropdownButton`, and many more. Check before building a custom one.
 
 To see every available component, read `node_modules/@dhis2/ui/build/es/index.js` — it
-re-exports everything the library provides. Always import from `@dhis2/ui` directly.
+re-exports everything the library provides.
+
+## Clone and read the UI library source
+
+Before implementing any UI, clone the `@dhis2/ui` source so you can read how components
+actually work. This is not optional — your training data does not reliably know the props,
+composition patterns, or behavior of DHIS2 UI components. The source does.
+
+1. Check if already cloned at `./opensrc/repos/github.com/dhis2/ui/`. If yes, skip to step 4.
+2. Read `package.json` to find the `@dhis2/ui` version. Strip range prefix (`^`, `~`)
+   — e.g. `"^10.12.13"` → `10.12.13`.
+3. Clone with opensrc (tags are `v`-prefixed):
+   ```bash
+   npx opensrc dhis2/ui#v10.12.13 --modify
+   ```
+4. Component source lives in `components/` — each has its own package with `src/`
+   (e.g. `components/data-table/src/`). Search there for the component you need.
 
 ## Custom styling
 

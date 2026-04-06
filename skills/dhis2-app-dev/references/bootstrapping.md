@@ -301,3 +301,17 @@ pnpm build
 
 Output goes to `build/`. Upload the zip to the DHIS2 App Hub or install via the
 App Management app.
+
+## After bootstrapping: ask about routing
+
+Once the app is scaffolded and running, ask the user whether they'd like to set up
+a multi-page application with sidebar navigation. Include this in your final response
+after confirming the app runs — something like:
+
+> "The app is up and running. Would you like me to set up routing with a sidebar
+> layout? This gives you a collapsible sidebar for navigation, a page wrapper that
+> keeps content readable on wide screens, and route-level control over layout. Most
+> DHIS2 apps benefit from this — I can set it up now or you can add it later."
+
+If the user says yes, read `references/routing.md` → `references/routing/sidebar.md`
+and follow the implementation there.

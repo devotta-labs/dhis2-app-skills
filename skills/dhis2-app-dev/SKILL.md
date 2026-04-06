@@ -26,40 +26,33 @@ Before doing anything, figure out whether you're in an existing DHIS2 project or
 |-------|-----|--------|
 | `d2.config.js` exists in project root | Glob for `d2.config.js` | **Existing project** — skip scaffolding |
 | `@dhis2/app-runtime` in package.json | Read `package.json` | **Existing project** — skip scaffolding |
-| Neither found | — | **New project** — follow `references/bootstrapping.md` |
+| Neither found | — | **New project** — read `references/bootstrapping.md` |
 
 If it's an existing project, read `d2.config.js` and `package.json` to understand what's
-already configured before making changes. Then jump to the relevant section below for whatever
-the user needs.
+already configured before making changes.
 
-If it's a new project, follow the full bootstrapping workflow in `references/bootstrapping.md`.
-That guide walks through scaffolding, installing the tech stack, and configuring everything
-step by step.
+## What does the user need?
 
-## Fetching data from the DHIS2 API
+Read the references that match the user's task. Most real tasks combine data and UI —
+read all that apply. When both are needed, read `data-fetching.md` first so you understand
+the API shape before building the UI.
 
-When the user needs to read or write data — fetching metadata, querying tracked entities, creating
-or deleting resources — follow `references/data-fetching.md`. It covers:
-
-- How to clone the DHIS2 source code with `opensrc` to get authoritative API contracts
-  (endpoint paths, request/response shapes, query parameters) instead of guessing
-- Building custom hooks with `useApiDataQuery` and the correct caching strategy
-- Query parameters: filtering, ordering, and pagination
-- Mutations with cache invalidation and user feedback via alerts
-- Version-aware feature flags for handling API differences across DHIS2 versions
-- Loading and error state handling
-
-## Building UI
-
-When building user interfaces, use `@dhis2/ui` components — not generic libraries like MUI
-or Chakra, and not custom-built primitives. DHIS2 has its own design system and `@dhis2/ui`
-implements it. See `references/ui-patterns.md` for guidance on component usage, styling with
-CSS Modules, and design tokens.
-
-When the app needs sidebar navigation, follow `references/sidebar-navigation.md`. It provides
-a dark-themed, collapsible sidebar built from composable primitives that integrate with
-React Router and the DHIS2 layout pattern.
+| Scenario | References (read in order) |
+|----------|--------------------------|
+| Create or scaffold a new DHIS2 app | `references/bootstrapping.md` |
+| Fetch or mutate data without building UI (hooks, scripts, bulk operations) | `references/data-fetching.md` |
+| Build a page that displays data (list, table, detail view) | `references/data-fetching.md` → `references/ui-patterns.md` |
+| Build a form to create or edit a resource | `references/data-fetching.md` → `references/ui-patterns.md` |
+| Add navigation, page layout, or sidebar | `references/routing.md` → `references/routing/sidebar.md` |
+| Build or style any UI component | `references/ui-patterns.md` |
+| Handle API differences across DHIS2 versions | `references/data-fetching.md` (§ Feature flags) |
 
 ## Rules
 
+These apply to all DHIS2 work, regardless of which references you read:
+
 - **React 18 only.** No Suspense for data fetching, no React 19 APIs (`use()`, `useFormStatus`, etc.). Handle loading states explicitly with `isLoading` and `CircularLoader`.
+- **Always use `@dhis2/ui`** for UI components. Not MUI, Chakra, Ant Design. Only use custom components if the ui library doesn't provide the component you need.
+- **Always clone and read source code** before writing data-fetching or UI code. Your training data is unreliable for DHIS2 APIs and component props — the source is the contract.
+- **Use `i18n.t()` from `@dhis2/d2-i18n`** for all user-facing strings.
+- **CSS Modules + DHIS2 design tokens** for styling (`var(--spacers-dp16)`, `var(--colors-grey900)`, etc.).
