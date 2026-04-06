@@ -3,6 +3,7 @@ name: dhis2-app-development
 description: >
   Guide for building DHIS2 custom applications using the DHIS2 App Platform.
   Use this skill whenever the user wants to create, scaffold, or bootstrap a DHIS2 app,
+  run or start a DHIS2 app, build for production or deploy,
   fetch data from the DHIS2 API, work with aggregate data, tracker data, metadata, or analytics,
   write mutations, or handle version differences across DHIS2 instances.
   Also use it when the user mentions DHIS2, d2, dhis2 app platform, or any DHIS2-specific
@@ -40,6 +41,7 @@ the API shape before building the UI.
 | Scenario | References (read in order) |
 |----------|--------------------------|
 | Create or scaffold a new DHIS2 app | `references/bootstrapping.md` |
+| Run, start, or deploy a DHIS2 app | `references/running-your-app.md` |
 | Fetch or mutate data without building UI (hooks, scripts, bulk operations) | `references/data-fetching.md` |
 | Build a page that displays data (list, table, detail view) | `references/data-fetching.md` → `references/ui-patterns.md` |
 | Build a form to create or edit a resource | `references/data-fetching.md` → `references/ui-patterns.md` |

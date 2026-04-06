@@ -272,36 +272,9 @@ Always use `useApiDataQuery` for data fetching — never use `useDataQuery` from
 pnpm start
 ```
 
-The app runs at `http://localhost:3000`. The login screen appears — enter the DHIS2
-server URL (either `http://localhost:8080` if a local instance was detected in step 1,
-or the remote URL the user provided) and credentials.
-
-If developing against a remote instance, use the proxy:
-
-```bash
-pnpm start --proxy <remote-dhis2-url>
-```
-
-The proxy runs on port 8080 and handles CORS. At the login screen, enter
-`http://localhost:8080` as the server URL.
-
----
-
-## Platform notes (App Platform v12)
-
-- **File extensions** — Vite requires `.tsx` for JSX files. Plain `.ts` cannot contain JSX.
-- **Environment variables** — use the `DHIS2_` prefix (not `REACT_APP_`).
-- **Node version** — 18 or 20+ required.
-- **Globals** — use `window.variableName`, not `global.variableName`.
-
-## Building for production
-
-```bash
-pnpm build
-```
-
-Output goes to `build/`. Upload the zip to the DHIS2 App Hub or install via the
-App Management app.
+The app opens at `http://localhost:3000`. Confirm the login screen appears and you
+can log in. For details on proxy mode, CORS handling, remote instances, platform
+notes, and building for production, see `references/running-your-app.md`.
 
 ## After bootstrapping: ask about routing
 
