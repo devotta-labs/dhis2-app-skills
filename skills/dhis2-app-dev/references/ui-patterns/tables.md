@@ -1,9 +1,204 @@
 # Tables
 
-Use **TanStack Table** (`@tanstack/react-table`) for column definitions, sorting, filtering,
-and pagination state — then render with `@dhis2/ui` `DataTable` components for the visual
-layer. Data is fetched at the parent level and passed in as props (see
-`references/data-fetching.md`).
+Use **TanStack Table** (`@tanstack/react-table`) for column definitions, sorting, and
+pagination state — then render with `@dhis2/ui` `DataTable` components for the visual layer.
+
+Pagination and page size live in the URL so the state survives navigation and is shareable.
+Only the current page of data is fetched from the API — never the entire collection.
+
+The pattern has three layers:
+1. **URL pagination hook** — reads/writes `page` and `pageSize` search params
+2. **Container component** — owns URL state, fetches data, handles loading/error
+3. **Presentational table component** — receives data and callbacks, renders the table
+
+---
+
+## URL pagination hook
+
+A reusable hook that keeps pagination state in the URL. Place it in `src/hooks/`.
+
+```tsx
+import { useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+
+const DEFAULT_PAGE_SIZE = 10;
+
+export const useTablePaginationParams = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const page = searchParams.get('page');
+    const pageSize = searchParams.get('pageSize');
+
+    const pageIndex = Math.max(0, (Number(page) || 1) - 1);
+    const pageSizeValue = Number(pageSize) || DEFAULT_PAGE_SIZE;
+
+    const setPageIndex = useCallback(
+        (newPageIndex: number) => {
+            setSearchParams(
+                (prev) => {
+                    const updated = new URLSearchParams(prev);
+                    const newPage = newPageIndex + 1;
+                    if (newPage <= 1) {
+                        updated.delete('page');
+                    } else {
+                        updated.set('page', String(newPage));
+                    }
+                    return updated;
+                },
+                { replace: true },
+            );
+        },
+        [setSearchParams],
+    );
+
+    const setPageSize = useCallback(
+        (newPageSize: number) => {
+            setSearchParams(
+                (prev) => {
+                    const updated = new URLSearchParams(prev);
+                    if (newPageSize === DEFAULT_PAGE_SIZE) {
+                        updated.delete('pageSize');
+                    } else {
+                        updated.set('pageSize', String(newPageSize));
+                    }
+                    updated.delete('page');
+                    return updated;
+                },
+                { replace: true },
+            );
+        },
+        [setSearchParams],
+    );
+
+    return useMemo(
+        () => ({ pageIndex, pageSize: pageSizeValue, setPageIndex, setPageSize }),
+        [pageIndex, pageSizeValue, setPageIndex, setPageSize],
+    );
+};
+```
+
+## Data-fetching hook
+
+Fetches a single page of data from the DHIS2 API. The response includes the pager envelope
+so the table knows the total count. See `references/data-fetching.md` for details on
+`useApiDataQuery`, caching strategy, and building query params.
+
+```tsx
+import { useApiDataQuery } from '@/utils/useApiDataQuery';
+
+type DataElement = {
+    id: string;
+    name: string;
+    shortName: string;
+    valueType: string;
+    lastUpdated: string;
+};
+
+type Pager = {
+    page: number;
+    pageCount: number;
+    total: number;
+    pageSize: number;
+};
+
+type DataElementsResponse = {
+    pager: Pager;
+    dataElements: DataElement[];
+};
+
+type UseDataElementsOptions = {
+    page: number;
+    pageSize: number;
+    search?: string;
+};
+
+export const useDataElements = ({ page, pageSize, search }: UseDataElementsOptions) => {
+    const { data, isLoading, error } = useApiDataQuery<DataElementsResponse>({
+        queryKey: ['dataElements', { page, pageSize, search }],
+        query: {
+            resource: 'dataElements',
+            params: {
+                fields: 'id,name,shortName,valueType,lastUpdated',
+                order: 'lastUpdated:desc',
+                page,
+                pageSize,
+                ...(search && {
+                    filter: [`name:ilike:${search}`],
+                }),
+            },
+        },
+        staleTime: 5 * 60 * 1000,
+        cacheTime: 10 * 60 * 1000,
+    });
+
+    return {
+        dataElements: data?.dataElements ?? [],
+        pager: data?.pager,
+        isLoading,
+        error,
+    };
+};
+```
+
+## Container component
+
+The container owns URL state, calls the data-fetching hook, and handles loading and error
+states. It passes resolved data and pagination callbacks to the presentational table.
+
+```tsx
+import { CircularLoader, NoticeBox } from '@dhis2/ui';
+import i18n from '@dhis2/d2-i18n';
+import { useTablePaginationParams } from '@/hooks/useTablePaginationParams';
+import { useDataElements } from '@/hooks/useDataElements';
+import { DataElementTable } from './DataElementTable';
+import styles from './DataElementTableContainer.module.css';
+
+type DataElementTableContainerProps = {
+    search?: string;
+};
+
+export const DataElementTableContainer = ({ search }: DataElementTableContainerProps) => {
+    const { pageIndex, pageSize, setPageIndex, setPageSize } = useTablePaginationParams();
+
+    const { dataElements, pager, isLoading, error } = useDataElements({
+        page: pageIndex + 1,
+        pageSize,
+        search,
+    });
+
+    if (isLoading) {
+        return (
+            <div className={styles.loadingContainer}>
+                <CircularLoader />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <NoticeBox error title={i18n.t('Error loading data elements')}>
+                {error.message || i18n.t('An unknown error occurred')}
+            </NoticeBox>
+        );
+    }
+
+    return (
+        <DataElementTable
+            dataElements={dataElements}
+            pager={pager}
+            pageIndex={pageIndex}
+            pageSize={pageSize}
+            onPageChange={setPageIndex}
+            onPageSizeChange={setPageSize}
+        />
+    );
+};
+```
+
+## Table component
+
+The table is purely presentational — it receives data and callbacks as props and renders
+using TanStack Table for column management and `@dhis2/ui` for the visual layer.
 
 ```tsx
 import { useState } from 'react';
@@ -23,8 +218,6 @@ import {
     flexRender,
     getCoreRowModel,
     getSortedRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
     useReactTable,
     Column,
     SortingState,
@@ -38,12 +231,18 @@ type DataElement = {
     lastUpdated: string;
 };
 
+type Pager = {
+    page: number;
+    pageCount: number;
+    total: number;
+    pageSize: number;
+};
+
 const columnHelper = createColumnHelper<DataElement>();
 
 const columns = [
     columnHelper.accessor('name', {
         header: i18n.t('Name'),
-        filterFn: 'includesString',
     }),
     columnHelper.accessor('shortName', {
         header: i18n.t('Short name'),
@@ -64,28 +263,35 @@ const getSortDirection = (column: Column<DataElement>) => {
 
 type DataElementTableProps = {
     dataElements: DataElement[];
-    search?: string;
+    pager?: Pager;
+    pageIndex: number;
+    pageSize: number;
+    onPageChange: (pageIndex: number) => void;
+    onPageSizeChange: (pageSize: number) => void;
 };
 
-const DataElementTable = ({ dataElements, search }: DataElementTableProps) => {
-    const [sorting, setSorting] = useState<SortingState>([
-        { id: 'lastUpdated', desc: true },
-    ]);
-    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+const DataElementTable = ({
+    dataElements,
+    pager,
+    pageIndex,
+    pageSize,
+    onPageChange,
+    onPageSizeChange,
+}: DataElementTableProps) => {
+    const [sorting, setSorting] = useState<SortingState>([]);
 
     const table = useReactTable({
         data: dataElements,
         columns,
         state: {
             sorting,
-            pagination,
-            columnFilters: search ? [{ id: 'name', value: search }] : [],
+            pagination: { pageIndex, pageSize },
         },
+        manualPagination: true,
+        pageCount: pager?.pageCount ?? -1,
         getRowId: (row) => row.id,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         onSortingChange: setSorting,
     });
 
@@ -139,17 +345,13 @@ const DataElementTable = ({ dataElements, search }: DataElementTableProps) => {
                 <DataTableRow>
                     <DataTableCell colSpan={String(columns.length)}>
                         <Pagination
-                            page={pagination.pageIndex + 1}
-                            pageSize={pagination.pageSize}
-                            pageCount={table.getPageCount()}
-                            total={table.getRowCount()}
+                            page={pageIndex + 1}
+                            pageSize={pageSize}
+                            pageCount={pager?.pageCount ?? 0}
+                            total={pager?.total ?? 0}
                             isLastPage={!table.getCanNextPage()}
-                            onPageChange={(page: number) =>
-                                setPagination((prev) => ({ ...prev, pageIndex: page - 1 }))
-                            }
-                            onPageSizeChange={(size: number) =>
-                                setPagination({ pageIndex: 0, pageSize: size })
-                            }
+                            onPageChange={(page: number) => onPageChange(page - 1)}
+                            onPageSizeChange={onPageSizeChange}
                         />
                     </DataTableCell>
                 </DataTableRow>
@@ -161,10 +363,13 @@ const DataElementTable = ({ dataElements, search }: DataElementTableProps) => {
 
 ## Key points
 
+- **Container / table split** — the container owns URL state, fetches data, and handles loading/error. The table component is purely presentational and receives everything via props. This keeps the table reusable and testable.
+- **URL-based pagination** — `page` and `pageSize` live in the URL as search params. The `useTablePaginationParams` hook is a reusable utility shared across all tables in the app. Default values are omitted from the URL to keep it clean.
+- **Server-side pagination** — pass `manualPagination: true` and `pageCount` to `useReactTable`. Do not use `getPaginationRowModel()` — the API handles pagination. The DHIS2 response envelope includes `pager.total` and `pager.pageCount` for the `Pagination` component.
+- **Server-side filtering** — search terms are sent as DHIS2 `filter` params (e.g. `name:ilike:${search}`) rather than filtering client-side. Client-side filtering with `getFilteredRowModel` doesn't work with server-side pagination because only one page of data is loaded.
 - **Column definitions live outside the component** — `createColumnHelper<T>()` gives type-safe accessors. Use `columnHelper.accessor` for data columns and `columnHelper.display` for non-data columns (selection checkboxes, action menus).
-- **Sorting** — spread sort props conditionally onto `DataTableColumnHeader` only when `header.column.getCanSort()` is true. Disable sorting on specific columns with `enableSorting: false`. Default sort should be descending on date columns.
-- **Filtering** — pass `columnFilters` in state as an array of `{ id, value }` objects. Define `filterFn` on columns that need filtering (e.g. `'includesString'` for text search, `'equals'` for exact match).
-- **Pagination** — `@dhis2/ui` `Pagination` is 1-indexed while TanStack Table is 0-indexed, so offset by 1 when bridging them. Wrap pagination inside `DataTableFoot > DataTableRow > DataTableCell` with `colSpan`.
+- **Sorting** — `getSortedRowModel()` sorts within the current page. For cross-page sorting, use the DHIS2 `order` API parameter and `manualSorting: true` on the table. Spread sort props conditionally onto `DataTableColumnHeader` only when `header.column.getCanSort()` is true.
+- **Pagination bridging** — `@dhis2/ui` `Pagination` is 1-indexed while TanStack Table is 0-indexed, so offset by 1 when bridging them. Wrap pagination inside `DataTableFoot > DataTableRow > DataTableCell` with `colSpan`.
 - **Empty state** — render a single row with `colSpan` covering all columns when there are no rows.
 - **Custom cells** — use the `cell` property on a column definition to render links, status pills, tooltips, or action menus. Access the full row object via `info.row.original`.
 - **Row selection** — add a `display` column with `Checkbox` and enable `enableRowSelection: true` + `onRowSelectionChange` on the table. Use `table.getSelectedRowModel().rows` to get selected items for batch actions.

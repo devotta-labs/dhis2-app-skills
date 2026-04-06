@@ -186,13 +186,12 @@ For create, update, and delete operations, use `useMutation` from TanStack Query
 
 Three things matter in every mutation hook:
 1. **Invalidate or remove related query cache** so the UI reflects the change
-2. **Show alerts** via `useAlert` from `@dhis2/app-service-alerts` to confirm success or report errors
+2. **Show alerts** via `useAlert` from `@dhis2/app-runtime` to confirm success or report errors
 3. **Expose pending state** (`isPending`) so the UI can show a spinner or disable buttons
 
 ```typescript
-import { useDataEngine } from '@dhis2/app-runtime';
+import { useDataEngine, useAlert } from '@dhis2/app-runtime';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAlert } from '@dhis2/app-service-alerts';
 import i18n from '@dhis2/d2-i18n';
 
 type UseDeleteRouteOptions = {

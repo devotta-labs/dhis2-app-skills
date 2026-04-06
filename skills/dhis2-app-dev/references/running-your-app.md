@@ -23,14 +23,11 @@ requests. If you get a 302, try the default credentials (`admin` / `district`):
 curl -s -o /dev/null -w "%{http_code}" -u admin:district http://localhost:8080/api/system/info
 ```
 
-- **200** — instance is running and credentials work. Use `http://localhost:8080` as the
-  server URL. Default credentials indicate the standard Sierra Leone demo database.
-- **Any other status (401, 403, connection error)** — either the credentials are wrong or
-  nothing is running on port 8080. Ask the user which instance and credentials to use.
-  Common setups:
-  - A local instance on a non-default port
-  - A remote server (e.g., a shared dev instance or DHIS2 play server)
-  - A Docker container (often still on `localhost:8080`, but may differ)
+- **200** — instance is running and default credentials work. Use `http://localhost:8080`.
+- **401/403** — something is running but the default credentials are wrong. Ask the user
+  for the correct credentials.
+- **Connection error** — nothing is running on port 8080. Ask the user whether they want
+  to develop against a local instance (different port, Docker) or a remote server.
 
 ### Node version
 
@@ -40,6 +37,9 @@ Node 18 or 20+ is required by the DHIS2 App Platform.
 
 ## Starting the dev server
 
+There are two modes. In both cases the app opens at `http://localhost:3000` with a
+login screen — the user logs in through the browser themselves.
+
 ### Local instance
 
 If the DHIS2 server is on `localhost:8080`:
@@ -47,10 +47,6 @@ If the DHIS2 server is on `localhost:8080`:
 ```bash
 pnpm start
 ```
-
-The app opens at `http://localhost:3000`. A login screen appears — enter
-`http://localhost:8080` as the server URL and `admin` / `district` as credentials
-(or whatever the user has specified).
 
 ### Remote instance (proxy mode)
 
@@ -67,9 +63,8 @@ DHIS2 maintains play servers at `https://play.im.dhis2.org/<version>`. Use `/dev
 user requests it or the app needs to match a particular DHIS2 version.
 
 The proxy starts on port 8080 and forwards API requests to the remote server, adding
-the necessary CORS headers. At the login screen, enter `http://localhost:8080` as the
-server URL (not the remote URL) and `admin` / `district` as credentials (or
-whatever the user has specified).
+the necessary CORS headers. At the login screen the user enters `http://localhost:8080`
+as the server URL (not the remote URL).
 
 ---
 

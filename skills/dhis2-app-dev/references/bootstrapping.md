@@ -8,20 +8,7 @@ tech stack. Follow every step in order — don't skip or substitute.
 
 ---
 
-## Step 1: Check for a local DHIS2 instance
-
-Before scaffolding, check whether the user has DHIS2 running locally on the default port:
-
-```bash
-curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/system/info
-```
-
-- **200** — local instance is running. Use `http://localhost:8080` as the server URL during development.
-- **Any other response or connection error** — no instance detected on port 8080. This doesn't
-  mean the user has no local instance — it may be on a different port, or they may use a remote
-  instance. Ask the user which DHIS2 instance they want to develop against.
-
-## Step 2: Scaffold
+## Step 1: Scaffold
 
 ```bash
 pnpm create @dhis2/app@latest <app-name> --typescript --yes
@@ -33,7 +20,7 @@ Always use `--typescript`. The `--yes` flag accepts defaults (pnpm, basic templa
 cd <app-name>
 ```
 
-## Step 3: Install the stack
+## Step 2: Install the stack
 
 ```bash
 pnpm add @tanstack/react-query@4 @tanstack/react-table react-router-dom
@@ -41,7 +28,7 @@ pnpm add @tanstack/react-query@4 @tanstack/react-table react-router-dom
 
 TanStack Query must be version 4 — do not install v5.
 
-## Step 4: Configure `d2.config.js`
+## Step 3: Configure `d2.config.js`
 
 Replace the scaffolded config with:
 
@@ -66,7 +53,7 @@ module.exports = config
 
 Set `minDHIS2Version` to the oldest DHIS2 version the app needs to support.
 
-## Step 5: Create `vite.config.mts`
+## Step 4: Create `vite.config.mts`
 
 Create this file in the project root:
 
@@ -85,7 +72,7 @@ export default defineConfig({
 
 This enables `@/components/Foo` imports instead of relative paths.
 
-## Step 6: Add the path alias to `tsconfig.json`
+## Step 5: Add the path alias to `tsconfig.json`
 
 Add the `paths` mapping so TypeScript resolves the `@` alias:
 
@@ -103,7 +90,7 @@ Add the `paths` mapping so TypeScript resolves the `@` alias:
 Merge this into the existing `tsconfig.json` — don't overwrite the other compiler options
 that the scaffolder set up.
 
-## Step 7: Create `src/utils/SyncUrlWithGlobalShell.tsx`
+## Step 6: Create `src/utils/SyncUrlWithGlobalShell.tsx`
 
 ```tsx
 import { useEffect } from 'react'
@@ -134,7 +121,7 @@ This is a layout route component — it wraps all routes so the Global Shell URL
 in sync. Without it, the browser URL won't update when navigating. Every route should
 be a child of this layout.
 
-## Step 8: Set up `src/App.tsx`
+## Step 7: Set up `src/App.tsx`
 
 Replace the contents of `src/App.tsx` with:
 
@@ -182,7 +169,7 @@ All routes are nested under the `SyncUrlWithGlobalShell` layout route, so every
 page automatically keeps the Global Shell URL in sync. Add new routes as children
 of that layout.
 
-## Step 9: Create `src/interfaces/apiQueryTypes.ts`
+## Step 8: Create `src/interfaces/apiQueryTypes.ts`
 
 ```typescript
 export type PossiblyDynamic<Type, InputType> = Type | ((input: InputType) => Type)
@@ -217,7 +204,7 @@ These types describe the shape of a DHIS2 API query passed to the data engine.
 `ResourceQuery` is the main one — it maps to a DHIS2 API resource with optional
 id, request body, and query parameters.
 
-## Step 10: Create `src/utils/useApiDataQuery.ts`
+## Step 9: Create `src/utils/useApiDataQuery.ts`
 
 ```typescript
 import { useDataEngine } from '@dhis2/app-runtime'
@@ -266,25 +253,14 @@ export const useApiDataQuery = <
 Always use `useApiDataQuery` for data fetching — never use `useDataQuery` from
 `@dhis2/app-runtime` directly.
 
-## Step 11: Verify it runs
-
-```bash
-pnpm start
-```
-
-The app opens at `http://localhost:3000`. Confirm the login screen appears and you
-can log in. For details on proxy mode, CORS handling, remote instances, platform
-notes, and building for production, see `references/running-your-app.md`.
-
 ## After bootstrapping: ask about routing
 
-Once the app is scaffolded and running, ask the user whether they'd like to set up
-a multi-page application with sidebar navigation. Include this in your final response
-after confirming the app runs — something like:
+Once the app is scaffolded, ask the user whether they'd like to set up a multi-page
+application with sidebar navigation. Something like:
 
-> "The app is up and running. Would you like me to set up routing with a sidebar
-> layout? This gives you a collapsible sidebar for navigation, a page wrapper that
-> keeps content readable on wide screens, and route-level control over layout. Most
+> "The app is ready. Would you like me to set up routing with a sidebar layout?
+> This gives you a collapsible sidebar for navigation, a page wrapper that keeps
+> content readable on wide screens, and route-level control over layout. Most
 > DHIS2 apps benefit from this — I can set it up now or you can add it later."
 
 If the user says yes, read `references/routing.md` → `references/routing/sidebar.md`
