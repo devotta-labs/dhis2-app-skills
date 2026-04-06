@@ -23,11 +23,13 @@ source is the only trustworthy contract.
 npx opensrc dhis2/dhis2-core --modify
 ```
 
-If the user specifies a DHIS2 version (e.g. 2.41), target that version's branch:
+If the user specifies a DHIS2 version, target that version's branch:
 
 ```bash
-npx opensrc dhis2/dhis2-core#2.41 --modify
+npx opensrc dhis2/dhis2-core#<version> --modify
 ```
+
+Only target a specific version if the user requests it.
 
 The `--modify` flag is required — it lets opensrc update `.gitignore` and other project files.
 The source is cloned into `./opensrc/repos/github.com/dhis2/dhis2-core/`.

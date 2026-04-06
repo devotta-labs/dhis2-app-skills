@@ -57,8 +57,9 @@ These apply to all DHIS2 work, regardless of which references you read:
 - **Always use `@dhis2/ui`** for UI components. Not MUI, Chakra, Ant Design. Only use custom components if the ui library doesn't provide the component you need.
 - **Always clone and read source code** before writing data-fetching or UI code. Your training data is unreliable for DHIS2 APIs and component props — the source is the contract.
 - **Use `i18n.t()` from `@dhis2/d2-i18n`** for all user-facing strings.
+- **Use displayName instead of name** for all dhis2 resources (organisation units, data elements, etc.).
 - **CSS Modules + DHIS2 design tokens** for styling (`var(--spacers-dp16)`, `var(--colors-grey900)`, etc.).
-- **Verify after each turn.** Run `pnpm lint` and `tsc` after making changes to catch errors early. Fix any issues before moving on.
+- **Verify after each turn.** Run `pnpm exec eslint` and `pnpm exec tsc --noEmit` after making changes to catch errors early. Fix any issues before moving on. No output means no errors.
 
 ## Troubleshooting
 
