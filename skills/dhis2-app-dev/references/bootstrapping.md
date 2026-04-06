@@ -8,6 +8,11 @@ tech stack. Follow every step in order — don't skip or substitute.
 
 ---
 
+## Step 0: Ask for the app name
+
+Ask the user for the app name (kebab-cased, e.g. `facility-registry`). This is the
+only question — don't ask for anything else. Use `AskUserQuestion` if available.
+
 ## Step 1: Scaffold
 
 ```bash
@@ -37,9 +42,7 @@ Replace the scaffolded config with:
 const config = {
     type: 'app',
     name: '<app-name>',
-    title: '<App Title>',
-    description: '<short description>',
-    minDHIS2Version: '2.40',
+    minDHIS2Version: '2.41',
 
     entryPoints: {
         app: './src/App.tsx',
@@ -50,8 +53,6 @@ const config = {
 
 module.exports = config
 ```
-
-Set `minDHIS2Version` to the oldest DHIS2 version the app needs to support.
 
 ## Step 4: Create `vite.config.mts`
 
