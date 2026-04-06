@@ -9,8 +9,9 @@ since they don't expose a standard `ref`.
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button, ButtonStrip, InputField, SingleSelectField, SingleSelectOption } from '@dhis2/ui';
+import { Button, ButtonStrip, InputField, Modal, ModalActions, ModalContent, ModalTitle, SingleSelectField, SingleSelectOption } from '@dhis2/ui';
 import i18n from '@dhis2/d2-i18n';
+import { useNavigationBlocker } from '@/hooks/useNavigationBlocker';
 
 const schema = z.object({
     name: z.string().min(1, { message: i18n.t('Name is required') }),
@@ -29,10 +30,14 @@ const DataElementForm = ({ onSubmit, isPending }: DataElementFormProps) => {
     const {
         control,
         handleSubmit,
+        formState: { isDirty },
     } = useForm<FormValues>({
         resolver: zodResolver(schema),
         defaultValues: { name: '', shortName: '', valueType: '' },
     });
+
+    const { showConfirmModal, handleConfirmNavigation, handleCancelNavigation } =
+        useNavigationBlocker({ shouldBlock: isDirty });
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -84,10 +89,34 @@ const DataElementForm = ({ onSubmit, isPending }: DataElementFormProps) => {
                     {i18n.t('Save')}
                 </Button>
             </ButtonStrip>
+            {showConfirmModal && (
+                <Modal>
+                    <ModalTitle>{i18n.t('Unsaved changes')}</ModalTitle>
+                    <ModalContent>
+                        {i18n.t('You have unsaved changes. Are you sure you want to leave?')}
+                    </ModalContent>
+                    <ModalActions>
+                        <ButtonStrip end>
+                            <Button onClick={handleCancelNavigation}>{i18n.t('Stay')}</Button>
+                            <Button destructive onClick={handleConfirmNavigation}>
+                                {i18n.t('Leave')}
+                            </Button>
+                        </ButtonStrip>
+                    </ModalActions>
+                </Modal>
+            )}
         </form>
     );
 };
 ```
+
+## Modal vs. dedicated page
+
+Match form complexity to its container. Simple, low-field forms (e.g. rename, quick
+create) work well in a modal. For larger or multi-step forms, navigate to a dedicated
+page instead — this gives full control over layout, validation feedback, and navigation
+blocking. The convention is to append `/new` to the current route (e.g. `/data-elements/new`)
+and navigate there on "Create new" actions. See `references/routing.md` for route setup.
 
 ## Key points
 
@@ -96,3 +125,37 @@ const DataElementForm = ({ onSubmit, isPending }: DataElementFormProps) => {
 - `InputField` bundles label + validation text. For simple modal forms, `Input` + `Label` with manual error display works too.
 - Use `FormProvider` + `useFormContext` when a form spans multiple components.
 - Pass `loading` and `disabled` to submit buttons from mutation pending state.
+
+## Blocking navigation on unsaved changes
+
+Prevent users from accidentally leaving a form with unsaved edits. Use React Router's
+`useBlocker` wrapped in a custom hook that exposes a confirmation modal trigger:
+
+```tsx
+import { useBlocker } from 'react-router-dom';
+import { useCallback } from 'react';
+
+export const useNavigationBlocker = ({ shouldBlock }: { shouldBlock: boolean }) => {
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            shouldBlock && currentLocation.pathname !== nextLocation.pathname,
+    );
+
+    const handleConfirmNavigation = useCallback(() => {
+        if (blocker.state === 'blocked') blocker.proceed();
+    }, [blocker]);
+
+    const handleCancelNavigation = useCallback(() => {
+        if (blocker.state === 'blocked') blocker.reset?.();
+    }, [blocker]);
+
+    return {
+        showConfirmModal: blocker.state === 'blocked',
+        handleConfirmNavigation,
+        handleCancelNavigation,
+    };
+};
+```
+
+Pass `isDirty` from React Hook Form's `formState` as `shouldBlock`, and render a
+confirmation dialog when `showConfirmModal` is true.
