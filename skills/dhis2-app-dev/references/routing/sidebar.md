@@ -230,7 +230,7 @@ const SidebarNavLink = ({ to, label, end }: LinkItem & { end?: boolean }) => (
     <SidenavLink to={to} label={label} end={end} LinkComponent={NavLink} />
 );
 
-const SidebarParent = ({
+export const SidebarParent = ({
     label,
     links,
     initiallyOpen = true,

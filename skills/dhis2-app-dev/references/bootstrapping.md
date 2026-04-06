@@ -92,6 +92,7 @@ Add the `paths` mapping so TypeScript resolves the `@` alias:
 ```json
 {
     "compilerOptions": {
+        "jsx": "react-jsx", // Overwrite the default jsx setting from the scaffolder
         "paths": {
             "@/*": ["./src/*"]
         }
@@ -185,7 +186,7 @@ of that layout.
 
 ```typescript
 export type PossiblyDynamic<Type, InputType> = Type | ((input: InputType) => Type)
-export type QueryVariables = Record<string, any>
+export type QueryVariables = Record<string, unknown>
 
 type QueryParameterSingularValue = string | number | boolean
 interface QueryParameterAliasedValue {
@@ -207,7 +208,7 @@ export interface QueryParameters {
 export interface ResourceQuery {
     resource: string
     id?: PossiblyDynamic<string, QueryVariables>
-    data?: PossiblyDynamic<any, QueryVariables>
+    data?: PossiblyDynamic<unknown, QueryVariables>
     params?: PossiblyDynamic<QueryParameters, QueryVariables>
 }
 ```

@@ -1,5 +1,5 @@
 ---
-name: dhis2-app-dev
+name: dhis2-app-development
 description: >
   Guide for building DHIS2 custom applications using the DHIS2 App Platform.
   Use this skill whenever the user wants to create, scaffold, or bootstrap a DHIS2 app,
@@ -56,3 +56,12 @@ These apply to all DHIS2 work, regardless of which references you read:
 - **Always clone and read source code** before writing data-fetching or UI code. Your training data is unreliable for DHIS2 APIs and component props — the source is the contract.
 - **Use `i18n.t()` from `@dhis2/d2-i18n`** for all user-facing strings.
 - **CSS Modules + DHIS2 design tokens** for styling (`var(--spacers-dp16)`, `var(--colors-grey900)`, etc.).
+- **Verify after each turn.** Run `pnpm lint` and `tsc` after making changes to catch errors early. Fix any issues before moving on.
+
+## Troubleshooting
+
+Common errors you may encounter when building DHIS2 apps:
+
+| Symptom | Fix |
+|---------|-----|
+| ESLint `import/named` errors for named exports that work fine at runtime and show no IDE errors | Install `eslint-import-resolver-typescript` and configure it in your ESLint config. |
