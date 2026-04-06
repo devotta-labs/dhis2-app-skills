@@ -11,7 +11,8 @@ tech stack. Follow every step in order — don't skip or substitute.
 ## Step 0: Ask for the app name
 
 Ask the user for the app name (kebab-cased, e.g. `facility-registry`). This is the
-only question — don't ask for anything else. Use `AskUserQuestion` if available.
+only question — don't ask for anything else. Always use a tool to ask the question if available.
+For claude code, this is the AskUserQuestion tool. Always use this tool or similar if available.
 
 ## Step 1: Scaffold
 
