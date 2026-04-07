@@ -6,7 +6,37 @@ server is remote. Unless the user has specified other credentials, default to
 
 ---
 
-## Prerequisites
+## Step 1: Determine the DHIS2 instance
+
+Before doing anything else, figure out which DHIS2 instance the app should connect to.
+If the user has already told you (e.g. a URL, "use play", or "I have one running
+locally"), skip straight to the relevant section below. Otherwise, ask them using
+AskUserQuestion — don't guess or silently default to localhost.
+
+```
+AskUserQuestion(
+  question: "To run a DHIS2 app you need a DHIS2 server to connect to. Which option works best for you?",
+  options: [
+    "1. Just start the app — I'll sort out the server myself",
+    "2. I have a DHIS2 instance running locally",
+    "3. Use a hosted DHIS2 instance (play.im.dhis2.org)"
+  ]
+)
+```
+
+Based on the answer:
+
+- **Option 1** — Run `pnpm start` with no extra flags and let the user handle the
+  server configuration on their own. Skip the prerequisites check.
+- **Option 2** — Continue to "Prerequisites → DHIS2 instance" below to verify the
+  local instance is reachable and credentials work.
+- **Option 3 (recommended if no instance is running)** — Skip the local-instance check entirely. Go straight to
+  "Starting the dev server → Remote instance (proxy mode)" and use
+  `https://play.im.dhis2.org/dev` (or a specific version if the user requests one).
+
+---
+
+## Step 2: Prerequisites
 
 ### DHIS2 instance
 
@@ -35,7 +65,7 @@ Node 18 or 20+ is required by the DHIS2 App Platform.
 
 ---
 
-## Starting the dev server
+## Step 3: Starting the dev server
 
 There are two modes. In both cases the app opens at `http://localhost:3000` with a
 login screen — the user logs in through the browser themselves.
