@@ -255,18 +255,17 @@ export const useApiDataQuery = <
 Always use `useApiDataQuery` for data fetching — never use `useDataQuery` from
 `@dhis2/app-runtime` directly.
 
-## After bootstrapping: ask about routing
+## After bootstrapping: set up sidebar navigation
 
-Once the app is scaffolded, ask the user whether they'd like to set up a multi-page
-application with sidebar navigation. Something like:
+Once the above steps are complete, read `references/routing.md` →
+`references/routing/sidebar.md` and implement the sidebar navigation layout.
+This is a standard part of bootstrapping — most DHIS2 apps need sidebar navigation,
+so just set it up rather than asking. If you're already bootstrapping the app,
+there's no reason to leave this out.
 
-> "The app is ready. Would you like me to set up routing with a sidebar layout?
-> This gives you a collapsible sidebar for navigation, a page wrapper that keeps
-> content readable on wide screens, and route-level control over layout. Most
-> DHIS2 apps benefit from this — I can set it up now or you can add it later."
-
-If the user says yes, read `references/routing.md` → `references/routing/sidebar.md`
-and follow the implementation there.
+After the sidebar is in place, let the user know the app is fully bootstrapped
+and ask if they'd like to make any changes to the sidebar layout or navigation
+structure based on their specific needs.
 
 ## Troubleshooting
 
