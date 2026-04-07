@@ -361,6 +361,174 @@ const DataElementTable = ({
 };
 ```
 
+## Table actions
+
+Row-level actions go in a dedicated `display` column that renders an overflow menu (three-dot
+button). Each table gets its own actions menu component that manages menu state, conditional
+items, and confirmation modals.
+
+### Actions column definition
+
+Add the actions column at the end of the `columns` array using `columnHelper.display`:
+
+```tsx
+columnHelper.display({
+    id: 'actions',
+    header: i18n.t('Actions'),
+    cell: (info) => (
+        <DataElementActionsMenu
+            id={info.row.original.id}
+            name={info.row.original.name}
+        />
+    ),
+}),
+```
+
+Pass only the row data the menu needs via `info.row.original` — don't pass the whole row object.
+
+### OverflowButton
+
+The three-dot menu trigger is a reusable component built from `Button`, `Layer`, and `Popper`.
+See `references/ui-patterns/overflow-button.md` for the full implementation — create it once
+in `src/components/OverflowButton/` and reuse across all tables.
+
+### Actions menu component
+
+Each actions menu manages its own open/close state and any modal visibility state. Render
+`FlyoutMenu` with `MenuItem` entries — show or hide items conditionally based on row data.
+Mark destructive actions (delete, cancel) with the `destructive` prop.
+
+```tsx
+import { useState } from 'react';
+import {
+    FlyoutMenu,
+    MenuItem,
+    IconDelete16,
+    IconEdit16,
+    IconMore16,
+} from '@dhis2/ui';
+import i18n from '@dhis2/d2-i18n';
+import { OverflowButton } from '@/components/OverflowButton/OverflowButton';
+import { DeleteDataElementModal } from './DeleteDataElementModal';
+
+type DataElementActionsMenuProps = {
+    id: string;
+    name: string;
+};
+
+export const DataElementActionsMenu = ({ id, name }: DataElementActionsMenuProps) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+    return (
+        <>
+            <OverflowButton
+                small
+                open={menuOpen}
+                icon={<IconMore16 />}
+                onClick={() => setMenuOpen((prev) => !prev)}
+                component={
+                    <FlyoutMenu dense>
+                        <MenuItem
+                            label={i18n.t('Edit')}
+                            icon={<IconEdit16 />}
+                            onClick={() => {
+                                // navigate or open edit modal
+                                setMenuOpen(false);
+                            }}
+                        />
+                        <MenuItem
+                            label={i18n.t('Delete')}
+                            icon={<IconDelete16 />}
+                            destructive
+                            onClick={() => {
+                                setDeleteModalOpen(true);
+                                setMenuOpen(false);
+                            }}
+                        />
+                    </FlyoutMenu>
+                }
+            />
+
+            {deleteModalOpen && (
+                <DeleteDataElementModal
+                    id={id}
+                    name={name}
+                    onClose={() => setDeleteModalOpen(false)}
+                />
+            )}
+        </>
+    );
+};
+```
+
+### Confirmation modals
+
+Destructive actions should open a confirmation modal before executing. Use `Modal`,
+`ModalTitle`, `ModalContent`, and `ModalActions` from `@dhis2/ui`:
+
+```tsx
+import {
+    Button,
+    Modal,
+    ModalTitle,
+    ModalContent,
+    ModalActions,
+    ButtonStrip,
+} from '@dhis2/ui';
+import i18n from '@dhis2/d2-i18n';
+import { useDeleteDataElement } from '@/hooks/useDeleteDataElement';
+
+type DeleteDataElementModalProps = {
+    id: string;
+    name: string;
+    onClose: () => void;
+};
+
+export const DeleteDataElementModal = ({ id, name, onClose }: DeleteDataElementModalProps) => {
+    const { mutate: deleteElement, isLoading } = useDeleteDataElement({
+        onSuccess: onClose,
+    });
+
+    return (
+        <Modal onClose={onClose} small>
+            <ModalTitle>{i18n.t('Delete data element')}</ModalTitle>
+            <ModalContent>
+                {i18n.t('Are you sure you want to delete "{{name}}"? This action cannot be undone.', { name })}
+            </ModalContent>
+            <ModalActions>
+                <ButtonStrip end>
+                    <Button onClick={onClose} secondary disabled={isLoading}>
+                        {i18n.t('Cancel')}
+                    </Button>
+                    <Button
+                        onClick={() => deleteElement(id)}
+                        destructive
+                        disabled={isLoading}
+                        loading={isLoading}
+                    >
+                        {i18n.t('Delete')}
+                    </Button>
+                </ButtonStrip>
+            </ModalActions>
+        </Modal>
+    );
+};
+```
+
+### File structure
+
+Colocate the actions menu and its modals next to the table component:
+
+```
+DataElementTable/
+├── DataElementTable.tsx
+├── DataElementTableContainer.tsx
+├── DataElementActionsMenu/
+│   ├── DataElementActionsMenu.tsx
+│   └── DeleteDataElementModal.tsx
+```
+
 ## Key points
 
 - **Container / table split** — the container owns URL state, fetches data, and handles loading/error. The table component is purely presentational and receives everything via props. This keeps the table reusable and testable.
@@ -373,4 +541,4 @@ const DataElementTable = ({
 - **Empty state** — render a single row with `colSpan` covering all columns when there are no rows.
 - **Custom cells** — use the `cell` property on a column definition to render links, status pills, tooltips, or action menus. Access the full row object via `info.row.original`.
 - **Row selection** — add a `display` column with `Checkbox` and enable `enableRowSelection: true` + `onRowSelectionChange` on the table. Use `table.getSelectedRowModel().rows` to get selected items for batch actions.
-- **Actions column** — use a `display` column rendering a `FlyoutMenu` with `MenuItem` entries for row-level actions (edit, delete, etc.).
+- **Actions column** — use a `display` column rendering an `OverflowButton` (three-dot menu) with a `FlyoutMenu`. Colocate the actions menu component and its modals next to the table. Show/hide menu items conditionally based on row state, and always use a confirmation modal before destructive actions.
