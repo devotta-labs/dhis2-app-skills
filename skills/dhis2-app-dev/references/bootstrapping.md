@@ -267,3 +267,23 @@ application with sidebar navigation. Something like:
 
 If the user says yes, read `references/routing.md` → `references/routing/sidebar.md`
 and follow the implementation there.
+
+## Troubleshooting
+
+### `pnpm: command not found` or `node: command not found`
+
+If Node.js is not installed, the user needs to install it first. Point them to
+https://nodejs.org/en/download — download the `.pkg` installer on macOS or the
+`.msi` installer on Windows.
+
+After installing, restart your terminal so the `node` command is available on your PATH. Once `node -v` runs successfully, install pnpm:
+
+```bash
+node -v
+npm -v
+npm install -g corepack@latest
+corepack enable pnpm
+pnpm -v
+```
+
+After `pnpm -v` prints a version, retry from Step 1.
