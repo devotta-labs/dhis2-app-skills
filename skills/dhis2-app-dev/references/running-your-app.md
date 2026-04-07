@@ -32,7 +32,7 @@ Based on the answer:
   local instance is reachable and credentials work.
 - **Option 3 (recommended if no instance is running)** — Skip the local-instance check entirely. Go straight to
   "Starting the dev server → Remote instance (proxy mode)" and use
-  `https://play.im.dhis2.org/dev` (or a specific version if the user requests one).
+  `https://play.im.dhis2.org/dev-2-43` (or a specific version if the user requests one).
 
 ---
 
@@ -84,12 +84,12 @@ If developing against a remote DHIS2 server, the browser will block API requests
 CORS. The App Platform includes a built-in proxy to handle this:
 
 ```bash
-pnpm start --proxy https://play.im.dhis2.org/dev
+pnpm start --proxy https://play.im.dhis2.org/dev-2-43
 ```
 
-DHIS2 maintains play servers at `https://play.im.dhis2.org/<version>`. Use `/dev`
-(master) by default. For a specific version, use the major version number — e.g.,
-`/dev-2-43` for 2.43, `/dev-2-42` for 2.42. Only target a specific version if the
+DHIS2 maintains play servers at `https://play.im.dhis2.org/<version>`. Use `/dev-2-43`
+(2.43) by default. For a different version, swap the version number — e.g.,
+`/dev-2-42` for 2.42, `/dev` for master. Only target a different version if the
 user requests it or the app needs to match a particular DHIS2 version.
 
 The proxy starts on port 8080 and forwards API requests to the remote server, adding
