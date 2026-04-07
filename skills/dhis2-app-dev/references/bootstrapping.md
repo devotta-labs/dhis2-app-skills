@@ -258,7 +258,7 @@ Always use `useApiDataQuery` for data fetching — never use `useDataQuery` from
 ## After bootstrapping: set up sidebar navigation
 
 Once the above steps are complete, read `references/routing.md` →
-`references/routing/sidebar.md` and implement the sidebar navigation layout.
+`references/ui-patterns/sidebar.md` and implement the sidebar navigation layout.
 This is a standard part of bootstrapping — most DHIS2 apps need sidebar navigation,
 so just set it up rather than asking. If you're already bootstrapping the app,
 there's no reason to leave this out.

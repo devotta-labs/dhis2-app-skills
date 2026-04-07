@@ -45,7 +45,7 @@ the API shape before building the UI.
 | Fetch or mutate data without building UI (hooks, scripts, bulk operations) | `references/data-fetching.md` |
 | Build a page that displays data (list, table, detail view) | `references/data-fetching.md` → `references/ui-patterns.md` |
 | Build a form to create or edit a resource | `references/data-fetching.md` → `references/ui-patterns.md` |
-| Add navigation, page layout, or sidebar | `references/routing.md` → `references/routing/sidebar.md` |
+| Add navigation, page layout, or sidebar | `references/routing.md` → `references/ui-patterns/sidebar.md` |
 | Build or style any UI component | `references/ui-patterns.md` |
 | Handle API differences across DHIS2 versions | `references/data-fetching.md` (§ Feature flags) |
 
