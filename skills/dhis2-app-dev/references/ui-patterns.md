@@ -83,3 +83,15 @@ layer. Important: `@dhis2/ui` `Pagination` is 1-indexed while TanStack Table is 
 so offset by 1 when bridging them. Data is fetched at the parent level and passed as props.
 
 For the full example and detailed key points, read `references/ui-patterns/tables.md`.
+
+## Widgets
+
+Use the `Widget` component for bordered card sections with a header — available in
+collapsible and non-collapsible variants. For the full implementation, read
+`references/ui-patterns/widget.md`.
+
+## Dashboards
+
+Arrange Widgets in a two-column flex layout with a 3:1 ratio (left column for main
+content, right column for summaries). For the layout CSS and usage, read
+`references/ui-patterns/dashboards.md`.
