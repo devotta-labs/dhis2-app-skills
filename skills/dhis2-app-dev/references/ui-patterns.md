@@ -34,21 +34,28 @@ The library has more components than you'd expect — `Transfer`, `SelectorBar`,
 To see every available component, read `node_modules/@dhis2/ui/build/es/index.js` — it
 re-exports everything the library provides.
 
-## Clone and read the UI library source
+## Fetch and read the UI library source
 
-Before implementing any UI, clone the `@dhis2/ui` source so you can read how components
-actually work. This is not optional — your training data does not reliably know the props,
-composition patterns, or behavior of DHIS2 UI components. The source does.
+Before implementing any UI, fetch the `@dhis2/ui` source with [`opensrc`](https://opensrc.sh)
+so you can read how components actually work. This is not optional — your training data does
+not reliably know the props, composition patterns, or behavior of DHIS2 UI components. The
+source does.
 
-1. Check if already cloned at `./opensrc/repos/github.com/dhis2/ui/`. If yes, skip to step 4.
-2. Read `package.json` to find the `@dhis2/ui` version. Strip range prefix (`^`, `~`)
+1. Read `package.json` to find the `@dhis2/ui` version. Strip range prefix (`^`, `~`)
    — e.g. `"^10.12.13"` → `10.12.13`.
-3. Clone with opensrc (tags are `v`-prefixed):
+2. Fetch with opensrc (tags are `v`-prefixed). `npx opensrc path` prints the absolute path
+   to the cached source, fetching on cache miss:
    ```bash
-   npx opensrc dhis2/ui#v10.12.13 --modify
+   UI=$(npx opensrc path dhis2/ui@v10.12.13)
    ```
-4. Component source lives in `components/` — each has its own package with `src/`
-   (e.g. `components/data-table/src/`). Search there for the component you need.
+   The source is cached globally at `~/.opensrc/repos/github.com/dhis2/ui/v10.12.13/`.
+3. Component source lives in `components/` — each has its own package with `src/`
+   (e.g. `components/data-table/src/`). Search there for the component you need:
+   ```bash
+   ls "$UI/components"
+   rg "DataTable" "$UI/components/data-table/src"
+   ```
+
 
 ## Custom styling
 

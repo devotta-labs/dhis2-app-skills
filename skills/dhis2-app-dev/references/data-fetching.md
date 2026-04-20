@@ -4,39 +4,48 @@ DHIS2's API changes between major versions — endpoint paths, request/response 
 query parameters all evolve. Do not rely on memorized API structures. Instead, read the
 source code of the version the user is targeting.
 
-**Every data-fetching task starts by cloning the source and reading the relevant controller.**
+**Every data-fetching task starts by fetching the source and reading the relevant controller.**
 This is not optional and not something you skip for "simple" endpoints. Even well-known
 resources like `organisationUnits` or `trackedEntities` have had their APIs change between
-versions. Clone first, then write code.
+versions. Fetch first, then write code.
 
 ---
 
-## Step 1: Clone the DHIS2 source
+## Step 1: Fetch the DHIS2 source
 
 This is the first thing you do for any data-fetching work — before writing a single line of
-hook or component code. Clone the DHIS2 backend so you can read the actual API contracts —
+hook or component code. Fetch the DHIS2 backend so you can read the actual API contracts —
 controller definitions, request/response DTOs, query parameter handling, and validation rules.
 Your training data is not reliable for DHIS2 APIs because they change between versions. The
 source is the only trustworthy contract.
 
+Use [`opensrc`](https://opensrc.sh) to shallow-clone packages into a global cache at
+`~/.opensrc/`. `npx opensrc path <spec>` prints the absolute path to the cached source
+(fetching on cache miss), so you compose it with other tools via `$(...)`:
+
 ```bash
-npx opensrc dhis2/dhis2-core --modify
+npx opensrc path dhis2/dhis2-core
 ```
 
-If the user specifies a DHIS2 version, target that version's branch:
+If the user specifies a DHIS2 version, target that version's tag with `@<version>`:
 
 ```bash
-npx opensrc dhis2/dhis2-core#<version> --modify
+npx opensrc path dhis2/dhis2-core@<version>
 ```
 
 Only target a specific version if the user requests it.
 
-The `--modify` flag is required — it lets opensrc update `.gitignore` and other project files.
-The source is cloned into `./opensrc/repos/github.com/dhis2/dhis2-core/`.
+The source is cached at `~/.opensrc/repos/github.com/dhis2/dhis2-core/<version>/`. Store the
+path in a variable so you can reuse it:
 
-## Step 2: Read the API contracts from the cloned source
+```bash
+CORE=$(npx opensrc path dhis2/dhis2-core)
+rg "OrganisationUnitController" "$CORE"
+```
 
-Once the source is cloned, read the relevant controller and DTOs for the endpoint you're
+## Step 2: Read the API contracts from the cached source
+
+Once the source is cached, read the relevant controller and DTOs for the endpoint you're
 building. You need to extract:
 1. The endpoint path and HTTP methods
 2. Supported query parameters (filtering, paging, ordering, field selection)
@@ -57,7 +66,8 @@ a compact summary, keeping your main context clean.
 Use `subagent_type: "Explore"` and a prompt like:
 
 ```
-In the cloned DHIS2 source at `./opensrc/repos/github.com/dhis2/dhis2-core/`,
+In the DHIS2 source cached by opensrc (run `npx opensrc path dhis2/dhis2-core` to get
+the absolute path, typically `~/.opensrc/repos/github.com/dhis2/dhis2-core/<version>/`),
 find the controller and request/response DTOs for the `{resource}` endpoint (e.g.
 `trackedEntities`, `organisationUnits`, `programIndicators`). Return:
 1. The endpoint path and HTTP methods
@@ -357,12 +367,12 @@ or a meaningful error message.
 
 ## Best practices
 
-1. **Always clone the source and read it before writing code.** Before writing any hook
-   or mutation, run `npx opensrc dhis2/dhis2-core --modify` (or with a version branch like
-   `dhis2/dhis2-core#2.41` if the user specified one), then read the API contracts from the
-   source. If the Agent tool is available, launch an Explore subagent to keep your context
-   clean. Otherwise, read the source inline with Grep and Read. This applies to every
-   endpoint, no matter how common.
+1. **Always fetch the source and read it before writing code.** Before writing any hook
+   or mutation, run `npx opensrc path dhis2/dhis2-core` (or with a version tag like
+   `dhis2/dhis2-core@2.41` if the user specified one) to get the absolute path to the
+   cached source, then read the API contracts from it. If the Agent tool is available,
+   launch an Explore subagent to keep your context clean. Otherwise, read the source
+   inline with Grep and Read. This applies to every endpoint, no matter how common.
 
 2. **Only fetch the fields you need.** Always use the `fields` parameter to request exactly
    the properties your component uses. The `fields` filter is available on all DHIS2 API

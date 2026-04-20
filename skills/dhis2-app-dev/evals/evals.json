@@ -88,13 +88,13 @@
     {
       "id": 3,
       "prompt": "I have an existing DHIS2 app. I need a hook that fetches organisation units with their names and parent, and displays them in a list.",
-      "expected_output": "Agent clones DHIS2 source with opensrc, reads the organisationUnit controller/DTO, then builds a custom hook using useApiDataQuery with fields parameter, metadata caching, and a component with loading/error handling",
+      "expected_output": "Agent fetches DHIS2 source with opensrc, reads the organisationUnit controller/DTO, then builds a custom hook using useApiDataQuery with fields parameter, metadata caching, and a component with loading/error handling",
       "files": [],
       "assertions": [
         {
-          "name": "clones-source-with-opensrc",
+          "name": "fetches-source-with-opensrc",
           "type": "content_check",
-          "description": "Runs npx opensrc dhis2/dhis2-core --modify (or the source is already cloned) and reads the relevant controller/DTO before writing the hook — verifying the API contract from source rather than guessing"
+          "description": "Runs npx opensrc path dhis2/dhis2-core (or the source is already cached in ~/.opensrc) and reads the relevant controller/DTO before writing the hook — verifying the API contract from source rather than guessing"
         },
         {
           "name": "uses-useApiDataQuery",
@@ -121,13 +121,13 @@
     {
       "id": 4,
       "prompt": "I need to add the ability to delete a tracked entity from my DHIS2 app. The user should get confirmation that it worked or an error message.",
-      "expected_output": "Agent clones DHIS2 source with opensrc, reads the tracker controller/DTO to verify the delete endpoint, then builds a mutation hook using useMutation from TanStack Query with useDataEngine, cache invalidation, alerts, and pending state",
+      "expected_output": "Agent fetches DHIS2 source with opensrc, reads the tracker controller/DTO to verify the delete endpoint, then builds a mutation hook using useMutation from TanStack Query with useDataEngine, cache invalidation, alerts, and pending state",
       "files": [],
       "assertions": [
         {
-          "name": "clones-source-with-opensrc",
+          "name": "fetches-source-with-opensrc",
           "type": "content_check",
-          "description": "Runs npx opensrc dhis2/dhis2-core --modify (or the source is already cloned) and reads the relevant controller/DTO before writing the mutation — verifying the API contract from source rather than guessing"
+          "description": "Runs npx opensrc path dhis2/dhis2-core (or the source is already cached in ~/.opensrc) and reads the relevant controller/DTO before writing the mutation — verifying the API contract from source rather than guessing"
         },
         {
           "name": "tanstack-useMutation",
@@ -154,13 +154,13 @@
     {
       "id": 5,
       "prompt": "I need to fetch program indicators from my DHIS2 2.41 instance and display them in a filterable table. The user should be able to search by name.",
-      "expected_output": "Agent clones DHIS2 source at version 2.41 with opensrc, reads the programIndicators controller/DTO to verify endpoint shape and available query parameters, then builds a hook with useApiDataQuery, dynamic filter for search, fields parameter, and metadata caching",
+      "expected_output": "Agent fetches DHIS2 source at version 2.41 with opensrc, reads the programIndicators controller/DTO to verify endpoint shape and available query parameters, then builds a hook with useApiDataQuery, dynamic filter for search, fields parameter, and metadata caching",
       "files": [],
       "assertions": [
         {
-          "name": "clones-source-with-opensrc",
+          "name": "fetches-source-with-opensrc",
           "type": "content_check",
-          "description": "Runs npx opensrc dhis2/dhis2-core#2.41 --modify (targeting the correct version) and reads the programIndicators controller/DTO before writing the hook"
+          "description": "Runs npx opensrc path dhis2/dhis2-core@2.41 (targeting the correct version) and reads the programIndicators controller/DTO before writing the hook"
         },
         {
           "name": "uses-useApiDataQuery",
