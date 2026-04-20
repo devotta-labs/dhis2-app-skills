@@ -9,6 +9,7 @@ description: >
   Also use it when the user mentions DHIS2, d2, dhis2 app platform, or any DHIS2-specific
   terminology — even if they don't explicitly say "DHIS2 app."
 allowed-tools:
+  - Bash(opensrc *)
   - Bash(npx opensrc *)
 ---
 
