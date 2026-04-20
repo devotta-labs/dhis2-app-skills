@@ -20,19 +20,17 @@ Your training data is not reliable for DHIS2 APIs because they change between ve
 source is the only trustworthy contract.
 
 Use [`opensrc`](https://opensrc.sh) to shallow-clone packages into a global cache at
-`~/.opensrc/`. If it isn't installed yet, install it once with `npm install -g opensrc`.
-
-`opensrc path <spec>` prints the absolute path to the cached source (fetching on cache miss),
-so you compose it with other tools via `$(...)`:
+`~/.opensrc/`. `npx opensrc path <spec>` prints the absolute path to the cached source
+(fetching on cache miss), so you compose it with other tools via `$(...)`:
 
 ```bash
-opensrc path dhis2/dhis2-core
+npx opensrc path dhis2/dhis2-core
 ```
 
 If the user specifies a DHIS2 version, target that version's tag with `@<version>`:
 
 ```bash
-opensrc path dhis2/dhis2-core@<version>
+npx opensrc path dhis2/dhis2-core@<version>
 ```
 
 Only target a specific version if the user requests it.
@@ -41,7 +39,7 @@ The source is cached at `~/.opensrc/repos/github.com/dhis2/dhis2-core/<version>/
 path in a variable so you can reuse it:
 
 ```bash
-CORE=$(opensrc path dhis2/dhis2-core)
+CORE=$(npx opensrc path dhis2/dhis2-core)
 rg "OrganisationUnitController" "$CORE"
 ```
 
@@ -68,7 +66,7 @@ a compact summary, keeping your main context clean.
 Use `subagent_type: "Explore"` and a prompt like:
 
 ```
-In the DHIS2 source cached by opensrc (run `opensrc path dhis2/dhis2-core` to get
+In the DHIS2 source cached by opensrc (run `npx opensrc path dhis2/dhis2-core` to get
 the absolute path, typically `~/.opensrc/repos/github.com/dhis2/dhis2-core/<version>/`),
 find the controller and request/response DTOs for the `{resource}` endpoint (e.g.
 `trackedEntities`, `organisationUnits`, `programIndicators`). Return:
@@ -370,7 +368,7 @@ or a meaningful error message.
 ## Best practices
 
 1. **Always fetch the source and read it before writing code.** Before writing any hook
-   or mutation, run `opensrc path dhis2/dhis2-core` (or with a version tag like
+   or mutation, run `npx opensrc path dhis2/dhis2-core` (or with a version tag like
    `dhis2/dhis2-core@2.41` if the user specified one) to get the absolute path to the
    cached source, then read the API contracts from it. If the Agent tool is available,
    launch an Explore subagent to keep your context clean. Otherwise, read the source

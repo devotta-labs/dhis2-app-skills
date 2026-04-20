@@ -39,14 +39,14 @@ re-exports everything the library provides.
 Before implementing any UI, fetch the `@dhis2/ui` source with [`opensrc`](https://opensrc.sh)
 so you can read how components actually work. This is not optional — your training data does
 not reliably know the props, composition patterns, or behavior of DHIS2 UI components. The
-source does. If opensrc isn't installed yet, run `npm install -g opensrc` once.
+source does.
 
 1. Read `package.json` to find the `@dhis2/ui` version. Strip range prefix (`^`, `~`)
    — e.g. `"^10.12.13"` → `10.12.13`.
-2. Fetch with opensrc (tags are `v`-prefixed). `opensrc path` prints the absolute path to
-   the cached source, fetching on cache miss:
+2. Fetch with opensrc (tags are `v`-prefixed). `npx opensrc path` prints the absolute path
+   to the cached source, fetching on cache miss:
    ```bash
-   UI=$(opensrc path dhis2/ui@v10.12.13)
+   UI=$(npx opensrc path dhis2/ui@v10.12.13)
    ```
    The source is cached globally at `~/.opensrc/repos/github.com/dhis2/ui/v10.12.13/`.
 3. Component source lives in `components/` — each has its own package with `src/`
@@ -55,6 +55,7 @@ source does. If opensrc isn't installed yet, run `npm install -g opensrc` once.
    ls "$UI/components"
    rg "DataTable" "$UI/components/data-table/src"
    ```
+
 
 ## Custom styling
 

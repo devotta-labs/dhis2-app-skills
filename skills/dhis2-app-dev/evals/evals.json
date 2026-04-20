@@ -94,7 +94,7 @@
         {
           "name": "fetches-source-with-opensrc",
           "type": "content_check",
-          "description": "Runs opensrc path dhis2/dhis2-core (or the source is already cached in ~/.opensrc) and reads the relevant controller/DTO before writing the hook — verifying the API contract from source rather than guessing"
+          "description": "Runs npx opensrc path dhis2/dhis2-core (or the source is already cached in ~/.opensrc) and reads the relevant controller/DTO before writing the hook — verifying the API contract from source rather than guessing"
         },
         {
           "name": "uses-useApiDataQuery",
@@ -127,7 +127,7 @@
         {
           "name": "fetches-source-with-opensrc",
           "type": "content_check",
-          "description": "Runs opensrc path dhis2/dhis2-core (or the source is already cached in ~/.opensrc) and reads the relevant controller/DTO before writing the mutation — verifying the API contract from source rather than guessing"
+          "description": "Runs npx opensrc path dhis2/dhis2-core (or the source is already cached in ~/.opensrc) and reads the relevant controller/DTO before writing the mutation — verifying the API contract from source rather than guessing"
         },
         {
           "name": "tanstack-useMutation",
@@ -160,7 +160,7 @@
         {
           "name": "fetches-source-with-opensrc",
           "type": "content_check",
-          "description": "Runs opensrc path dhis2/dhis2-core@2.41 (targeting the correct version) and reads the programIndicators controller/DTO before writing the hook"
+          "description": "Runs npx opensrc path dhis2/dhis2-core@2.41 (targeting the correct version) and reads the programIndicators controller/DTO before writing the hook"
         },
         {
           "name": "uses-useApiDataQuery",
